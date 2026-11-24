@@ -67,6 +67,7 @@ while time.monotonic() < DEADLINE:
             or not re.fullmatch(r"PEqualNP\.Outside\.[A-Za-z0-9_]+", module)):
         lease_action("release", lease, "other")
         raise RuntimeError("Unexpected assignment shape")
+    kind = "refute" if gap.get("kind") == "refute" else "check"
     print("ASSIGNMENT", json.dumps({"gap": gap, "base_sha": subprocess.check_output(
         ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()}, ensure_ascii=False), flush=True)
     summary = pathlib.Path(os.environ["GITHUB_STEP_SUMMARY"])
@@ -123,14 +124,14 @@ while time.monotonic() < DEADLINE:
                     imports = pathlib.Path(os.environ["RUNNER_TEMP"]) / "imports.json"
                     imports.write_text(json.dumps(gap.get("imports") or []))
                     guards = ["node", ".github/scripts/outside-guard.mjs", "imports",
-                              str(target), str(imports), path, "check"]
+                              str(target), str(imports), path, kind]
                     good = run_check(guards, gid, stop)
                     if good:
                         good = run_check(
                             ["bash", "-c", 'cd lean && lake build "$1"', "check", "+" + module], gid, stop)
                     if good:
                         good = run_check(["node", "tools/check-lean.mjs", str(target),
-                                          str(statement), "check"], gid, stop)
+                                          str(statement), kind], gid, stop)
                     print("CANDIDATE_VERDICT", gid, digest, "ACCEPTED" if good else "NOT_ACCEPTED", flush=True)
                     target.unlink(missing_ok=True)
             stop.wait(15)
@@ -143,5 +144,5 @@ while time.monotonic() < DEADLINE:
                 print("RELEASED", gid, "out_of_time", flush=True)
             except Exception:
                 print("LEASE_RELEASE_FAILED", gid, flush=True)
-    if not released:
+    if not released or (control and control.get("stop")):
         break
