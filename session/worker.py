@@ -63,8 +63,8 @@ while time.monotonic() < DEADLINE:
     lease = assignment["lease"]["id"]
     gid, path, module = gap["id"], gap["file"], gap["module"]
     if (not re.fullmatch(r"L-[a-z]+-[0-9]+", gid)
-            or not re.fullmatch(r"lean/PEqualNP/Outside/[A-Za-z0-9_]+\\.lean", path)
-            or not re.fullmatch(r"PEqualNP\\.Outside\\.[A-Za-z0-9_]+", module)):
+            or not re.fullmatch(r"lean/PEqualNP/Outside/[A-Za-z0-9_]+\.lean", path)
+            or not re.fullmatch(r"PEqualNP\.Outside\.[A-Za-z0-9_]+", module)):
         lease_action("release", lease, "other")
         raise RuntimeError("Unexpected assignment shape")
     print("ASSIGNMENT", json.dumps({"gap": gap, "base_sha": subprocess.check_output(
@@ -126,7 +126,7 @@ while time.monotonic() < DEADLINE:
                               str(target), str(imports), path, "check"]
                     good = run_check(guards, gid, stop)
                     if good:
-                        good = run_check(["lake", "build", "+" + module], gid, stop) if False else run_check(
+                        good = run_check(
                             ["bash", "-c", 'cd lean && lake build "$1"', "check", "+" + module], gid, stop)
                     if good:
                         good = run_check(["node", "tools/check-lean.mjs", str(target),
