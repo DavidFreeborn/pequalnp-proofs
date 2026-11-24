@@ -35,3 +35,9 @@ A direct enumeration of all 512 input assignments gives 58 zero inputs and 454 o
 A useful elementary observation is that any nonconstant function implied by the edge function must depend on a vertex cover: if an edge is disjoint from its support, turn on that edge while holding a falsifying support assignment fixed. For a final AND, each nonconstant input function therefore needs such a cover. This helps exclude small circuits, but does not establish the assigned bound for thirteen internal gates with sharing and negation.
 
 No full proof or counterexample has been established in this session. No mathematical pull request has been submitted.
+
+## Additional verification
+
+The upstream proof was traced through PR 4290 and its authoritative run 45348787165. The pull request is merged. The run completed successfully and its checker log reports acceptance of L-meta-1672, the three allowed axioms, and replay of 3,679 project constants. This confirms that the example has a recorded checker execution, beyond its appearance in the desk's checked list.
+
+The script session/small_case_search.py exhaustively checks semantic circuit prefixes with at most three internal gates after the fixed OR gate. Constants false and true are supplied free, so this search permits at least the operations the small cases require. It visits 1, 95, 10,449 and 1,315,780 prefixes at depths zero through three. No nonconstant function that is true on all 454 positive target inputs occurs. Therefore these small cases cannot provide a final AND computing the target. This is an ordinary Python calculation, not a Lean-checked result, and does not cover the task's thirteen-gate range.
