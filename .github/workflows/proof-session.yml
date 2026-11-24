@@ -1,0 +1,43 @@
+name: Proof session
+on:
+  push:
+    branches: [codex/proof-checking]
+    paths: [.github/workflows/proof-session.yml, session/worker.py]
+permissions:
+  contents: read
+concurrency:
+  group: proof-session
+  cancel-in-progress: false
+jobs:
+  session:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          path: controller
+      - uses: actions/checkout@v4
+        with:
+          repository: brilliant-hq/pequalnp-proofs
+          persist-credentials: false
+          path: project
+      - name: Install official Lean toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          export ELAN_HOME="$RUNNER_TEMP/pnp-elan"
+          curl --proto '=https' -fsSL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -o "$RUNNER_TEMP/elan-init.sh"
+          sh "$RUNNER_TEMP/elan-init.sh" -y --no-modify-path --default-toolchain none
+          "$ELAN_HOME/bin/elan" toolchain install "$(cat project/lean/lean-toolchain)"
+          echo "ELAN_HOME=$ELAN_HOME" >> "$GITHUB_ENV"
+          echo "$ELAN_HOME/bin" >> "$GITHUB_PATH"
+      - name: Fetch pinned Mathlib and prepare checker
+        working-directory: project/lean
+        run: |
+          lake exe cache get
+          lake build checklemma
+      - name: Take a step and check submitted candidates
+        env:
+          PYTHONUNBUFFERED: "1"
+        run: python3 controller/session/worker.py
