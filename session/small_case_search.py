@@ -29,3 +29,13 @@ visit(initial,0)
 print(json.dumps({"gates_after_fixed_or":3,"constants_given_free":True,
 "semantic_program_prefixes":counts,"nonconstant_superfunction_of_target_found":found,
 "seconds":round(time.time()-start,3)}))
+
+def covers(s):
+    return all((s>>u)&1 or (s>>v)&1 for u,v in edges)
+minimal_covers=[s for s in range(512) if covers(s) and all(
+    not covers(s^(1<<v)) for v in range(9) if (s>>v)&1)]
+pair_coverage=all(any((s>>u)&1 and (s>>v)&1 for s in minimal_covers)
+                  for u in range(9) for v in range(u,9))
+print(json.dumps({"inclusion_minimal_covers":[
+    [v for v in range(9) if (s>>v)&1] for s in minimal_covers],
+    "every_vertex_pair_in_some_minimal_cover":pair_coverage}))
